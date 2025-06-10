@@ -1,0 +1,338 @@
+This is my server.js
+
+/**
+ * server.js
+ * TalentHub Backend Server Entry Point
+ * Author: Mr. Valentin Zirimwabagabo (with assistance from ChatGPT)
+ */
+require('dotenv').config();
+require('dotenv-safe').config({
+  example: './.env.example',
+  allowEmptyValues: true
+});
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const path = require('path');
+
+// Import error handler
+const { errorHandler } = require('./src/middlewares/errorHandler');
+
+// Import route modules
+const authRoutes = require('./src/routes/authRoutes');
+const talentRoutes = require('./src/routes/talentRoutes');
+const eventRoutes = require('./src/routes/eventRoutes');
+const donationRoutes = require('./src/routes/donationRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
+const analyticsRoutes = require('./src/routes/analyticsRoutes');
+const volunteerRoutes = require('./src/routes/volunteerRoutes');
+const messageRoutes = require('./src/routes/messageRoutes');
+const notificationRoutes = require('./src/routes/notificationRoutes');
+const reviewRoutes = require('./src/routes/reviewRoutes');
+const bookmarkRoutes = require('./src/routes/bookmarkRoutes');
+
+
+
+
+// Initialize Express app
+const app = express();
+
+// Security Middleware
+app.use(helmet());
+app.use(cors({
+    origin: process.env.CLIENT_URL, // restrict origins for security
+    credentials: true
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan('combined'));
+
+// Rate Limiting (for API abuse prevention) 
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false
+});
+app.use('/api/', limiter);
+
+// Database Connection
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('✅ MongoDB Connected'))
+    .catch(err => {
+        console.error('❌ MongoDB connection error:', err);
+        process.exit(1);
+    });
+
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/talents', talentRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/donations', donationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/volunteers', volunteerRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/bookmarks', bookmarkRoutes);
+
+// ... (add all other feature routes here)
+
+// Serve static files (for portfolio images, videos)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Global Error Handler
+app.use(errorHandler);
+
+// Server Initialization
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+});
+
+and these are my routes:
+ADMIN ROUTE:
+const express = require('express');
+const router = express.Router();
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const { getAnalytics } = require('../controllers/adminController');
+
+// Analytics endpoint
+router.get('/analytics', protect, adminOnly, getAnalytics);
+
+module.exports = router;
+
+ANALYTICS ROUTE
+// src/routes/analyticsRoutes.js
+
+const express = require('express');
+const router = express.Router();
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const { getDashboardStats } = require('../controllers/analyticsController');
+
+// Admin-only dashboard
+router.get('/dashboard', protect, adminOnly, getDashboardStats);
+
+module.exports = router;
+
+authRoutes
+const express = require('express');
+const router = express.Router();
+const {
+  registerUser,
+  loginUser,
+  getUserProfile,
+  deleteUser,
+  deleteAllUsers,
+  forgotPassword,
+  resetPassword
+} = require('../controllers/authController');
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+// Auth Routes
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+router.get('/profile', protect, getUserProfile);
+router.delete('/all', protect, adminOnly, deleteAllUsers); 
+router.delete('/:id', protect, adminOnly, deleteUser);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password/:token', resetPassword);
+
+module.exports = router;
+
+bookmarkRoutes
+const express = require('express');
+const router = express.Router();
+const { protect } = require('../middlewares/authMiddleware');
+const {
+    addBookmark,
+    getBookmarks,
+    deleteBookmark
+} = require('../controllers/bookmarkController');
+
+// Add a new bookmark
+router.post('/', protect, addBookmark);
+
+// Get all bookmarks for the logged-in user
+router.get('/', protect, getBookmarks);
+
+// Delete a bookmark by ID
+router.delete('/:id', protect, deleteBookmark);
+
+module.exports = router;
+
+donationRoutes
+const express = require('express');
+const router = express.Router();
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const {
+    createDonation,
+    getAllDonations,
+    getUserDonations,
+    getDonationById,
+    deleteDonation
+} = require('../controllers/donationController');
+
+// User Routes
+router.post('/', protect, createDonation);               // Create donation
+router.get('/me', protect, getUserDonations);            // Get current user's donations
+
+// Admin Routes
+router.get('/', protect, adminOnly, getAllDonations);    // Get all donations
+router.get('/:id', protect, adminOnly, getDonationById); // Get single donation
+router.delete('/:id', protect, adminOnly, deleteDonation); // Delete donation
+
+module.exports = router;
+
+eventRoutes
+// src/routes/eventRoutes.js
+
+const express = require('express');
+const router = express.Router();
+
+const {
+    createEvent,
+    getAllEvents,
+    getEventById,
+    updateEvent,
+    deleteEvent
+} = require('../controllers/eventController');
+
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+
+// Routes
+router.post('/', protect, createEvent);                 // Create a new event
+router.get('/', getAllEvents);                          // Get all events
+router.get('/:id', getEventById);                       // Get a single event
+router.put('/:id', protect, updateEvent);               // Update an event
+router.delete('/:id', protect, deleteEvent);            // Delete an event
+
+module.exports = router;
+
+messageRoutes
+const express = require('express');
+const router = express.Router();
+const { protect } = require('../middlewares/authMiddleware');
+const {
+    sendMessage,
+    getUserMessages,
+    getUnreadMessages,
+    markAsRead,
+    deleteMessage
+} = require('../controllers/messageController');
+
+router.post('/', protect, sendMessage);
+router.get('/', protect, getUserMessages);
+router.get('/unread', protect, getUnreadMessages);
+router.patch('/:id/read', protect, markAsRead);
+router.delete('/:id', protect, deleteMessage);
+
+module.exports = router;
+
+
+notificationRoutes
+// src/routes/notificationRoutes.js
+
+const express = require('express');
+const router = express.Router();
+const { protect } = require('../middlewares/authMiddleware');
+const {
+    createNotification,
+    getMyNotifications,
+    markAsRead,
+    deleteNotification
+} = require('../controllers/notificationController');
+
+router.post('/', protect, createNotification);
+router.get('/me', protect, getMyNotifications);
+router.put('/:id/read', protect, markAsRead);
+router.delete('/:id', protect, deleteNotification);
+
+module.exports = router;
+
+reviewRoutes
+// src/routes/reviewRoutes.js
+
+const express = require('express');
+const router = express.Router();
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const {
+    createReview,
+    getUserReviews,
+    getAllReviews,
+    deleteReview
+} = require('../controllers/reviewController');
+
+// Routes
+router.post('/', protect, createReview); // Create a new review
+router.get('/me', protect, getUserReviews); // Get user's own reviews
+router.get('/', protect, adminOnly, getAllReviews); // Admin: Get all reviews
+router.delete('/:id', protect, deleteReview); // Delete a review
+
+module.exports = router;
+
+talentRoutes
+const express = require('express');
+const router = express.Router();
+// Import controller functions
+const { 
+    createTalentProfile,
+    getTalentProfile,
+    updateTalentProfile,
+    deleteTalentProfile,
+    getAllTalentProfiles,
+    getTalentProfileById,
+    uploadPortfolioImage, // <-- Make sure this is imported
+    deletePortfolioImage // 🔥 New line!
+} = require('../controllers/talentController');
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const upload = require('../middlewares/uploadMiddleware');
+// Add a new route to delete portfolio images
+router.delete('/portfolio/:imageId', protect, deletePortfolioImage);
+
+// Add a new route to upload portfolio images
+router.post('/upload', protect, upload.array('portfolioImage'), uploadPortfolioImage);
+
+// User Routes
+router.post('/', protect, createTalentProfile); // Create a new profile
+router.get('/me', protect, getTalentProfile); // Get current user's profile
+router.put('/me', protect, updateTalentProfile); // Update current user's profile
+router.delete('/me', protect, deleteTalentProfile); // Delete current user's profile
+
+// Admin Routes
+router.get('/', protect, adminOnly, getAllTalentProfiles); // Get all talent profiles
+router.get('/:id', protect, adminOnly, getTalentProfileById); // Get a single talent profile
+
+module.exports = router;
+
+volunteerRoutes
+const express = require('express');
+const router = express.Router();
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const {
+    createVolunteerProfile,
+    getAllVolunteers,
+    updateVolunteerStatus,
+    deleteVolunteer,
+    getVolunteerProfile,
+    updateVolunteerProfile,
+    deleteVolunteerProfile
+} = require('../controllers/volunteerController');
+
+// User: Create volunteer profile
+router.post('/', protect, createVolunteerProfile);
+router.get('/me', protect, getVolunteerProfile);
+router.put('/me', protect, updateVolunteerProfile);
+router.delete('/me', protect, deleteVolunteerProfile);
+
+// Admin: Manage all volunteers
+router.get('/', protect, adminOnly, getAllVolunteers);
+router.put('/:id/status', protect, adminOnly, updateVolunteerStatus);
+router.delete('/:id', protect, adminOnly, deleteVolunteer);
+
+module.exports = router;
+
