@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const asyncHandler = require('express-async-handler');
 const { protect } = require('../middlewares/authMiddleware');
 const {
     addBookmark,
@@ -8,12 +9,12 @@ const {
 } = require('../controllers/bookmarkController');
 
 // Add a new bookmark
-router.post('/', protect, addBookmark);
+router.post('/', protect, asyncHandler(addBookmark));
 
 // Get all bookmarks for the logged-in user
-router.get('/', protect, getBookmarks);
+router.get('/', protect, asyncHandler(getBookmarks));
 
 // Delete a bookmark by ID
-router.delete('/:id', protect, deleteBookmark);
+router.delete('/:id', protect, asyncHandler(deleteBookmark));
 
 module.exports = router;

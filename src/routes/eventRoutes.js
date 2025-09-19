@@ -2,6 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
+const asyncHandler = require('express-async-handler');
 
 const {
     createEvent,
@@ -14,10 +15,10 @@ const {
 const { protect, adminOnly } = require('../middlewares/authMiddleware');
 
 // Routes
-router.post('/', protect, createEvent);                 // Create a new event
-router.get('/', getAllEvents);                          // Get all events
-router.get('/:id', getEventById);                       // Get a single event
-router.put('/:id', protect, updateEvent);               // Update an event
-router.delete('/:id', protect, deleteEvent);            // Delete an event
+router.post('/', protect, asyncHandler(createEvent));                 // Create a new event
+router.get('/', asyncHandler(getAllEvents));                          // Get all events
+router.get('/:id', asyncHandler(getEventById));                       // Get a single event
+router.put('/:id', protect, asyncHandler(updateEvent));               // Update an event
+router.delete('/:id', protect, asyncHandler(deleteEvent));            // Delete an event
 
 module.exports = router;

@@ -2,8 +2,7 @@ This is my server.js
 
 /**
  * server.js
- * TalentHub Backend Server Entry Point
- * Author: Mr. Valentin Zirimwabagabo (with assistance from ChatGPT)
+ * RefuTalent Backend Server Entry Point
  */
 require('dotenv').config();
 require('dotenv-safe').config({
@@ -69,8 +68,8 @@ mongoose.connect(process.env.MONGO_URI)
 
 
 // API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/talents', talentRoutes);
+app.use('/api/auth', asyncHandler(authRoutes));
+app.use('/api/talents', asyncHandler(talentRoutes));
 app.use('/api/events', eventRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/admin', adminRoutes);

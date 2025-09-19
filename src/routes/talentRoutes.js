@@ -1,32 +1,41 @@
+// src/routes/talentRoutes.js
 const express = require('express');
 const router = express.Router();
+const asyncHandler = require('express-async-handler');
+
 // Import controller functions
-const { 
+const {
     createTalentProfile,
     getTalentProfile,
     updateTalentProfile,
     deleteTalentProfile,
     getAllTalentProfiles,
-    getTalentProfileById,
-    uploadPortfolioImage, // <-- Make sure this is imported
-    deletePortfolioImage // 🔥 New line!
+    getTalentProfileById
 } = require('../controllers/talentController');
+
 const { protect, adminOnly } = require('../middlewares/authMiddleware');
-const upload = require('../middlewares/uploadMiddleware');
-// Add a new route to delete portfolio images
-router.delete('/portfolio/:imageId', protect, deletePortfolioImage);
 
-// Add a new route to upload portfolio images
-router.post('/upload', protect, upload.array('portfolioImage'), uploadPortfolioImage);
+// Create a new talent profile (logged-in user only)
+router.post('/', protect, asyncHandler(createTalentProfile));
 
-// User Routes
-router.post('/', protect, createTalentProfile); // Create a new profile
-router.get('/me', protect, getTalentProfile); // Get current user's profile
-router.put('/me', protect, updateTalentProfile); // Update current user's profile
-router.delete('/me', protect, deleteTalentProfile); // Delete current user's profile
+// Get current user's own talent profile
+router.get('/me', protect, asyncHandler(getTalentProfile));
 
-// Admin Routes
-router.get('/', protect, adminOnly, getAllTalentProfiles); // Get all talent profiles
-router.get('/:id', protect, adminOnly, getTalentProfileById); // Get a single talent profile
+// Update current user's talent profile
+router.put('/me', protect, asyncHandler(updateTalentProfile));
+
+// Delete current user's talent profile
+router.delete('/me', protect, asyncHandler(deleteTalentProfile));
+
+
+// Get all talent profiles (public)
+router.get('/', asyncHandler(getAllTalentProfiles));
+
+// Get a single talent profile by ID (public)
+router.get('/:id', asyncHandler(getTalentProfileById));
+
+// [Optional] Delete any talent profile (admin only)
+router.delete('/:id', protect, adminOnly, asyncHandler(deleteTalentProfile));
+
 
 module.exports = router;
