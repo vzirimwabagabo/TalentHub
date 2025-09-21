@@ -11,13 +11,20 @@ const {
   resetPassword
 } = require('../controllers/authController');
 const { protect, adminOnly } = require('../middlewares/authMiddleware');
-// Auth Routes
-router.post('/register', asyncHandler(registerUser));
-router.post('/login', asyncHandler(loginUser));
+const {
+  registerValidation,
+  loginValidation,
+  forgotPasswordValidation,
+  resetPasswordValidation
+} = require('../middlewares/validation');
+const validateRequest = require('../middlewares/validateRequest');
+
+router.post('/register', registerValidation, validateRequest, asyncHandler(registerUser));
+router.post('/login', loginValidation, validateRequest, asyncHandler(loginUser));
 router.get('/me', protect, asyncHandler(getUserProfile));
-router.delete('/all', protect, adminOnly, asyncHandler(deleteAllUsers)); 
+router.delete('/all', protect, adminOnly, asyncHandler(deleteAllUsers));
 router.delete('/:id', protect, adminOnly, asyncHandler(deleteUser));
-router.post('/forgot-password', asyncHandler(forgotPassword));
-router.post('/reset-password/:token', asyncHandler(resetPassword));
+router.post('/forgot-password', forgotPasswordValidation, validateRequest, asyncHandler(forgotPassword));
+router.post('/reset-password/:token', resetPasswordValidation, validateRequest, asyncHandler(resetPassword));
 
 module.exports = router;

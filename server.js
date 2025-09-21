@@ -66,8 +66,8 @@ try {
       const baseName = file.replace('Routes.js', '');
       const apiPath = pluralMap[baseName.toLowerCase()] || baseName.toLowerCase();
       
-      app.use(`/api/${apiPath}`, route);
-      console.log(`✅ Mounted: /api/${apiPath}`);
+      app.use(`/api/v1/${apiPath}`, route);
+      console.log(`✅ Mounted: /api/v1/${apiPath}`);
     }
   });
 } catch (err) {
@@ -86,12 +86,12 @@ mongoose.connect(process.env.MONGO_URI)
 // Serve static files (e.g., portfolio uploads)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Healthcheck route (must come after routes or be explicitly defined)
+// Health check route (must come after routes or be explicitly defined)
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok', 
     uptime: process.uptime(),
-    message: 'RefuTalent backend is running!' 
+    message: 'TalentHub backend is running!' 
   });
 });
 

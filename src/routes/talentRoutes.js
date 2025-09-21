@@ -5,6 +5,8 @@ const asyncHandler = require('express-async-handler');
 
 // Import controller functions
 const {
+    createTalentProfileValidation,
+    updateTalentProfileValidation,
     createTalentProfile,
     getTalentProfile,
     updateTalentProfile,
@@ -14,6 +16,11 @@ const {
 } = require('../controllers/talentController');
 
 const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const { createTalentProfileValidation, updateTalentProfileValidation } = require('../middlewares/validation');
+const validateRequest = require('../middlewares/validateRequest');
+
+router.post('/', protect, createTalentProfileValidation, validateRequest, asyncHandler(createTalentProfile));
+router.put('/me', protect, updateTalentProfileValidation, validateRequest, asyncHandler(updateTalentProfile));
 
 // Create a new talent profile (logged-in user only)
 router.post('/', protect, asyncHandler(createTalentProfile));

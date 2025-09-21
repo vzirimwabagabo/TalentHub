@@ -1,5 +1,3 @@
-// src/controllers/authController.js
-
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const crypto = require('crypto');
@@ -16,16 +14,14 @@ const generateToken = (userId) => {
 // Register User
 exports.registerUser = async (req, res, next) => {
     try {
-        const { name, email, password} = req.body;
-
-        // Inside registerUser function, after user creation:
+        const { name, email, password } = req.body;
 
         // Check if user already exists
-        const userExists = await User.findOne({ email });
+        const userExists = await User.findOne({ email }); // No need to .select here
         if (userExists) {
             return res.status(400).json({ success: false, message: 'User already exists' });
         }
-        
+
         // Create user
         const user = await User.create({ name, email, password });
         await sendWelcomeEmail(user.email, user.name);
@@ -51,6 +47,7 @@ exports.loginUser = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
+        // We want to verify password, so we need the password field for this only
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ success: false, message: 'Invalid email or password' });
@@ -61,6 +58,7 @@ exports.loginUser = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Invalid email or password' });
         }
 
+        // When returning user data, exclude sensitive fields!
         res.status(200).json({
             success: true,
             message: 'Login successful',
@@ -69,9 +67,8 @@ exports.loginUser = async (req, res, next) => {
                 name: user.name,
                 email: user.email,
                 role: user.role
-               
             },
-             token: generateToken(user._id)
+            token: generateToken(user._id)
         });
     } catch (error) {
         next(error);
@@ -81,7 +78,7 @@ exports.loginUser = async (req, res, next) => {
 // Get User Profile
 exports.getUserProfile = async (req, res, next) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
+        const user = await User.findById(req.user.id).select('-password -resetPasswordToken -resetPasswordExpires');
         res.status(200).json({
             success: true,
             data: user,
@@ -92,41 +89,40 @@ exports.getUserProfile = async (req, res, next) => {
     }
 };
 
-exports.deleteUser = async(req, res) =>{
+exports.deleteUser = async (req, res) => {
     try {
-        const {id} = req.params;
+        const { id } = req.params;
 
         const user = await User.findByIdAndDelete(id);
-        if(!user){
-            return res.status(404).json({success: false, message: 'User not found'});
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
         }
-        res.status(200).json({success: true, message: 'User deleted successfully'});
-        
+        res.status(200).json({ success: true, message: 'User deleted successfully' });
     } catch (error) {
         console.log(error);
-        res.status(500).json({success: false, message: error.message});
+        res.status(500).json({ success: false, message: error.message });
     }
-}
+};
+
 // Delete all users except admin(s)
 exports.deleteAllUsers = async (req, res, next) => {
     try {
-        // This will delete all users whose role is NOT 'admin'
+        // Require explicit query param or header for confirmation
+        if (req.query.confirm !== 'YES_DELETE') {
+            return res.status(400).json({ success: false, message: 'Explicit confirmation required to delete all users.' });
+        }
         await User.deleteMany({ role: { $ne: 'admin' } });
-        res.status(200).json({
-            success: true,
-            message: '✅ All non-admin users have been deleted successfully.'
-        });
+        res.status(200).json({ success: true, message: 'All non-admin users deleted.' });
     } catch (error) {
-        console.error('❌ Failed to delete all users:', error);
         next(error);
     }
 };
 
-// 
-
+// Forgot Password
 exports.forgotPassword = async (req, res, next) => {
     try {
         const { email } = req.body;
+        // No need to select fields to exclude for internal password reset logic
         const user = await User.findOne({ email });
 
         if (!user) {
@@ -152,6 +148,7 @@ exports.forgotPassword = async (req, res, next) => {
     }
 };
 
+// Reset Password
 exports.resetPassword = async (req, res, next) => {
     try {
         const { token } = req.params; // Make sure token is passed in the URL

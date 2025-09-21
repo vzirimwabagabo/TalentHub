@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "test": "jest"
   },
   "author": "Valentin",
   "license": "ISC",
@@ -28,6 +29,7 @@
     "express": "^5.1.0",
     "express-async-handler": "^1.2.0",
     "express-rate-limit": "^7.5.0",
+    "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.1",
@@ -39,7 +41,9 @@
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
+    "jest": "^30.1.3",
     "postcss": "^8.5.4",
+    "supertest": "^7.1.4",
     "tailwindcss": "^4.1.8"
   }
 }
