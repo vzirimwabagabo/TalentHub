@@ -44,7 +44,7 @@ app.use('/api/', limiter);
 // === DYNAMIC ROUTE LOADER WITH SMART PLURALIZATION ===
 const pluralMap = {
   talent: 'talents',
-  portifolio: 'portifolio',     // intentional singular
+  portfolio: 'portfolio',     // intentional singular
   auth: 'auth',
   event: 'events',
   donation: 'donations',
