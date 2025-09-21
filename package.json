@@ -4,9 +4,8 @@
   "description": "A platform for connecting talent with opportunities.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.js",
-    "test": "jest"
+    "test": "echo \"Error: no test specified\" && exit 1", 
+    "dev": "nodemon server.js"
   },
   "author": "Valentin",
   "license": "ISC",

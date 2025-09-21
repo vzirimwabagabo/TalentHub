@@ -1,7 +1,7 @@
-// src/models/Portifolio.js
+// src/models/Portfolio.js
 const mongoose = require('mongoose');
 
-const portifolioSchema = new mongoose.Schema({
+const portfolioSchema = new mongoose.Schema({
   talent: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'TalentProfile',
@@ -18,7 +18,7 @@ const portifolioSchema = new mongoose.Schema({
   },
   mediaType: {
     type: String,
-    enum: ['image', 'video', 'pdf'],
+    enum: ['image', 'video', 'pdf', 'audio'], // ← Added 'audio' from your second def
     required: true
   },
   url: {
@@ -33,21 +33,16 @@ const portifolioSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  
-  title: { type: String, required: true },
-  description: { type: String },
-  mediaType: { 
-    type: String, 
-    enum: ['image', 'video', 'pdf', 'audio'], 
-    required: true 
-  },
   projectType: { 
     type: String,
     enum: ['Art', 'Music', 'Writing', 'Design', 'Video', 'Craft', 'Education']
-  }, // ← Helps categorize
-  tags: [String], // e.g., ["refugee story", "women empowerment"]
-  isFeatured: { type: Boolean, default: false }
+  },
+  tags: [String],
+  isFeatured: { 
+    type: Boolean, 
+    default: false 
+  }
 }, 
 { timestamps: true });
 
-module.exports = mongoose.model('Portifolio', portifolioSchema);
+module.exports = mongoose.model('Portfolio', portfolioSchema);
