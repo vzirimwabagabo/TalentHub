@@ -1,7 +1,7 @@
-//src/server.js
+// src/server.js
 require('dotenv-safe').config({
   example: './.env.example',
-  allowEmptyValues: true
+  allowEmptyValues: true,
 });
 
 const express = require('express');
@@ -12,45 +12,45 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
-const http = require('http');
-const { Server } = require('socket.io');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-const { errorHandler } = require('./src/middlewares/errorHandler');
+const { errorHandler } = require('./middlewares/errorHandler');
 
-const PORT = process.env.PORT || 5000;
 const app = express();
 
-// Security Middleware
+// ====== Security Middleware ======
 app.use(helmet());
-app.use(cors({
-  origin: process.env.CLIENT_URL,
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || '*',
+    credentials: true,
+  })
+);
 
-// Body parsing
+// ====== Body Parsing ======
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Logging
+// ====== Logging ======
 app.use(morgan('combined'));
 
-// Rate Limiting
+// ====== Rate Limiting ======
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
 });
 app.use('/api/', limiter);
 
-// === DYNAMIC ROUTE LOADER ===
-const pluralMap = { /* ... */ };
-const routesDir = path.join(__dirname, 'src', 'routes');
+// ====== Dynamic Route Loader ======
+const pluralMap = {}; // you can fill this mapping if needed
+const routesDir = path.join(__dirname, 'routes');
+
 try {
-  fs.readdirSync(routesDir).forEach(file => {
+  fs.readdirSync(routesDir).forEach((file) => {
     if (file.endsWith('Routes.js')) {
-      const route = require(`./src/routes/${file}`);
+      const route = require(`./routes/${file}`);
       const baseName = file.replace('Routes.js', '');
       const apiPath = pluralMap[baseName.toLowerCase()] || baseName.toLowerCase();
       app.use(`/api/v1/${apiPath}`, route);
@@ -59,95 +59,66 @@ try {
   });
 } catch (err) {
   console.error('❌ Failed to load routes:', err);
-  process.exit(1);
 }
 
-// Database Connection
+// ====== Database Connection ======
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
-// Start MongoDB Memory Server for development
 async function connectDB() {
   try {
     if (process.env.NODE_ENV === 'development') {
       const mongod = await MongoMemoryServer.create();
       const uri = mongod.getUri();
       await mongoose.connect(uri);
-      console.log('✅ MongoDB Memory Server Connected');
+      console.log('✅ Connected to In-Memory MongoDB (Development)');
     } else {
       await mongoose.connect(process.env.MONGO_URI);
-      console.log('✅ MongoDB Connected');
+      console.log('✅ Connected to MongoDB');
     }
   } catch (err) {
     console.error('❌ MongoDB connection error:', err);
-    process.exit(1);
   }
 }
 
 connectDB();
 
-// Serve static files
+// ====== Static Files ======
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ====== Languages API ======
 app.get('/api/v1/languages', (req, res) => {
   res.json({ languages: ['en', 'fr', 'sw'] });
 });
 
-// Swagger setup
+// ====== Swagger Documentation ======
 const swaggerSpec = swaggerJsdoc({
   swaggerDefinition: {
     openapi: '3.0.0',
-    info: { title: 'TalentHub API', version: '1.0.0' }
+    info: { title: 'TalentHub API', version: '1.0.0' },
   },
   apis: ['./src/routes/*.js'],
 });
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Health check
+// ====== Health Check ======
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
     uptime: process.uptime(),
-    message: 'TalentHub backend is running!'
+    message: 'TalentHub backend is running!',
   });
 });
 
-// 404 Handler
+// ====== 404 Handler ======
 app.use((req, res) => {
   res.status(404).json({
-    message: "Resource not found. Check the URL and HTTP method."
+    message: 'Resource not found. Check the URL and HTTP method.',
   });
 });
 
-// Error Handler
+// ====== Error Handler ======
 app.use(errorHandler);
 
-// Create HTTP server and Socket.IO
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: process.env.CLIENT_URL, credentials: true }
-});
-
-// Socket.IO logic
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-
-  socket.on('sendMessage', (data) => {
-    io.to(data.recipientId).emit('receiveMessage', data);
-  });
-
-  socket.on('join', (userId) => {
-    socket.join(userId);
-  });
-
-  socket.on('sendNotification', (notif) => {
-    io.to(notif.userId).emit('receiveNotification', notif);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-  });
-});
-
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-  console.log(`🔗 Try health check: GET http://localhost:${PORT}/api/health`);
-});
+// ====== Export Express App ======
+// Important for Vercel – do not call app.listen() here
+module.exports = app;
