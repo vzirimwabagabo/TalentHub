@@ -1,3 +1,5 @@
+// src/controllers/notificationController.js
+
 const Notification = require('../models/Notification');
 
 // Create Notification

@@ -1,3 +1,4 @@
+// src/controllers/bookmarkController.js
 const Bookmark = require('../models/Bookmark');
 
 // Create a new bookmark

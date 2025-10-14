@@ -1,3 +1,5 @@
+// src/routes/talentRoutes.js
+
 const express = require('express');
 const router = express.Router();
 const asyncHandler = require('express-async-handler');
@@ -36,5 +38,6 @@ router.get('/:id', asyncHandler(getTalentProfileById));
 
 // [Optional] Delete any talent profile (admin only)
 router.delete('/:id', protect, adminOnly, asyncHandler(deleteTalentProfile));
+
 
 module.exports = router;

@@ -1,0 +1,372 @@
+models
+// Bookmark
+const mongoose = require('mongoose');
+
+const bookmarkSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    itemId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true
+    },
+    itemType: {
+        type: String,
+        enum: ['Talent', 'Event', 'Message'],
+        required: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+module.exports = mongoose.model('Bookmark', bookmarkSchema);
+
+//// src/models/Donation.js
+
+const mongoose = require('mongoose');
+
+const donationSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    amount: {
+        type: Number,
+        required: true,
+        min: 1
+    },
+    description: {
+        type: String,
+        trim: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+module.exports = mongoose.model('Donation', donationSchema);
+
+
+// src/models/Event.js
+
+const mongoose = require('mongoose');
+
+const eventSchema = new mongoose.Schema({
+    title: {
+        type: String,
+        required: [true, 'Event title is required'],
+        trim: true
+    },
+    description: {
+        type: String,
+        required: [true, 'Event description is required']
+    },
+    date: {
+        type: Date,
+        required: [true, 'Event date is required']
+    },
+    location: {
+        type: String,
+        required: [true, 'Event location is required']
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: [true, 'Creator ID is required']
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    }
+}, {
+    timestamps: true
+});
+
+
+//Message
+module.exports = mongoose.model('Event', eventSchema);
+
+
+const mongoose = require('mongoose');
+
+const messageSchema = new mongoose.Schema({
+    sender: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    recipient: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    content: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    read: {
+        type: Boolean,
+        default: false
+    },
+    isDeleted: {
+  type: Boolean,
+  default: false
+}
+
+}, {
+    timestamps: true // adds createdAt and updatedAt
+});
+
+module.exports = mongoose.model('Message', messageSchema);
+
+
+// src/models/Notification.js
+
+const mongoose = require('mongoose');
+
+const notificationSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    message: {
+        type: String,
+        required: true
+    },
+    type: {
+        type: String,
+        enum: ['info', 'success', 'warning', 'error'],
+        default: 'info'
+    },
+    read: {
+        type: Boolean,
+        default: false
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+module.exports = mongoose.model('Notification', notificationSchema);
+
+//portfolio
+// src/models/Portfolio.js
+const mongoose = require('mongoose');
+
+const portfolioSchema = new mongoose.Schema({
+  talent: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'TalentProfile',
+    required: true
+  },
+  title: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  description: {
+    type: String,
+    maxlength: 1000
+  },
+  mediaType: {
+    type: String,
+    enum: ['image', 'video', 'pdf', 'audio'], // ← Added 'audio' from your second def
+    required: true
+  },
+  url: {
+    type: String,
+    required: true
+  },
+  fileName: {
+    type: String,
+    required: true
+  },
+  order: {
+    type: Number,
+    default: 0
+  },
+  projectType: { 
+    type: String,
+    enum: ['Art', 'Music', 'Writing', 'Design', 'Video', 'Craft', 'Education']
+  },
+  tags: [String],
+  isFeatured: { 
+    type: Boolean, 
+    default: false 
+  }
+}, 
+{ timestamps: true });
+
+module.exports = mongoose.model('Portfolio', portfolioSchema);
+
+//Review
+
+const mongoose = require('mongoose');
+
+const reviewSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    content: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    rating: {
+        type: Number,
+        min: 1,
+        max: 5,
+        required: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+module.exports = mongoose.model('Review', reviewSchema);
+
+//TalentProfile
+
+const mongoose = require('mongoose');
+
+const talentProfileSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true
+  },
+  bio: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  skills: [{
+    type: String,
+    trim: true
+  }],
+  headline: {
+    type: String,
+    trim: true,
+    maxlength: 100
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false
+  }
+}, {
+  timestamps: true
+});
+
+module.exports = mongoose.model('TalentProfile', talentProfileSchema);
+
+
+// src/models/User.js
+
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+const userSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: [true, 'Please enter your name']
+    },
+    email: {
+        type: String,
+        required: [true, 'Please enter your email'],
+        unique: true,
+        lowercase: true
+    },
+    password: {
+        type: String,
+        required: [true, 'Please enter your password'],
+        minlength: 6
+    },
+    role: {
+        type: String,
+        enum: ['participant', 'employer', 'admin'],
+        default: 'participant'
+    },
+    resetPasswordToken: {
+        type: String,
+    },
+    resetPasswordExpires: {
+        type: Date,
+    },
+    isDeleted: {
+  type: Boolean,
+  default: false
+}
+
+}, {
+    timestamps: true
+});
+
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+    if (!this.isModified('password')) return next();
+    this.password = await bcrypt.hash(this.password, 12);
+    next();
+});
+
+// Compare passwords for login
+userSchema.methods.matchPassword = async function(enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
+module.exports = mongoose.model('User', userSchema);
+
+// src/models/Volunteer.js
+
+const mongoose = require('mongoose');
+
+const volunteerSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  bio: {
+    type: String,
+    required: [true, 'Bio is required'],
+    trim: true,
+    minlength: [10, 'Bio must be at least 10 characters'],
+    maxlength: [500, 'Bio must be at most 500 characters']
+  },
+  availability: {
+    type: String,
+    required: [true, 'Availability is required'],
+    enum: {
+      values: ['Weekdays', 'Weekends', 'Anytime'],
+      message: 'Availability must be either Weekdays, Weekends, or Anytime'
+    }
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  isDeleted: {
+  type: Boolean,
+  default: false
+}
+
+}, {
+  timestamps: true
+});
+
+module.exports = mongoose.model('Volunteer', volunteerSchema);
+
+

@@ -1,0 +1,64 @@
+// src/utils/emailSender.js
+
+const nodemailer = require('nodemailer');
+
+// Mailtrap Configuration
+const transporter = nodemailer.createTransport({
+    host: 'sandbox.smtp.mailtrap.io',
+    port: 587,
+    auth: {
+        user: '487fcc123301ad',
+        pass: '97300d91ec0832' // Replace with your actual password from Mailtrap dashboard
+    }
+});
+
+exports.sendWelcomeEmail = async (to, name) => {
+    const mailOptions = {
+        from: '"TalentHub" <noreply@talenthub.com>',
+        to,
+        subject: 'Welcome to TalentHub!',
+        html: `<h1>Hello ${name},</h1><p>Welcome to TalentHub! We're thrilled to have you on board.</p>`
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('✅ Welcome email sent successfully');
+    } catch (error) {
+        console.error('❌ Failed to send welcome email:', error);
+    }
+};
+
+// src/utils/emailService.js
+
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+    host: 'sandbox.smtp.mailtrap.io',
+    port: 587,
+    auth: {
+        user: process.env.EMAIL_USER, // e.g., '487fcc123301ad'
+        pass: process.env.EMAIL_PASS  // e.g., '****0832'
+    }
+});
+
+exports.sendResetPasswordEmail = async (to, resetUrl) => {
+    const mailOptions = {
+        from: '"TalentHub" <noreply@talenthub.com>',
+        to,
+        subject: 'Reset Your Password',
+        text: `Hello,\n\nYou requested a password reset. Click the link below:\n\n${resetUrl}\n\nIf you did not request this, please ignore this email.`
+    };
+
+    await transporter.sendMail(mailOptions);
+};
+
+
+//src/utils/pathConfig.js
+
+const path = require('path');
+
+const UPLOAD_DIR = path.join(__dirname, '../uploads'); // or '../public/uploads'
+
+module.exports = { UPLOAD_DIR };
+
+

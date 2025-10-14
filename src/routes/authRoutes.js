@@ -8,9 +8,11 @@ const {
   deleteUser,
   deleteAllUsers,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  createAdminAccount
 } = require('../controllers/authController');
 const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const { verifyAdminSecret } = require('../middlewares/adminCountMiddleware');
 const {
   registerValidation,
   loginValidation,
@@ -26,5 +28,6 @@ router.delete('/all', protect, adminOnly, asyncHandler(deleteAllUsers));
 router.delete('/:id', protect, adminOnly, asyncHandler(deleteUser));
 router.post('/forgot-password', forgotPasswordValidation, validateRequest, asyncHandler(forgotPassword));
 router.post('/reset-password/:token', resetPasswordValidation, validateRequest, asyncHandler(resetPassword));
+router.post('/admin/create', registerValidation, validateRequest, verifyAdminSecret, asyncHandler(createAdminAccount));
 
 module.exports = router;

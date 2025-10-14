@@ -1,0 +1,289 @@
+const express = require('express');
+const router = express.Router();
+const asyncHandler = require('express-async-handler');
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const { getAnalytics } = require('../controllers/adminController');
+
+// Analytics endpoint
+router.get('/analytics', protect, adminOnly, asyncHandler(getAnalytics));
+
+module.exports = router;
+
+// src/routes/analyticsRoutes.js
+
+const express = require('express');
+const router = express.Router();
+const asyncHandler = require('express-async-handler');
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const { getDashboardStats } = require('../controllers/analyticsController');
+
+// Admin-only dashboard
+router.get('/dashboard', protect, adminOnly, asyncHandler(getDashboardStats));
+
+module.exports = router;
+
+//authRoutes
+
+const express = require('express');
+const router = express.Router();
+const asyncHandler = require('express-async-handler');
+const {
+  registerUser,
+  loginUser,
+  getUserProfile,
+  deleteUser,
+  deleteAllUsers,
+  forgotPassword,
+  resetPassword
+} = require('../controllers/authController');
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const {
+  registerValidation,
+  loginValidation,
+  forgotPasswordValidation,
+  resetPasswordValidation
+} = require('../middlewares/validation');
+const validateRequest = require('../middlewares/validateRequest');
+
+router.post('/register', registerValidation, validateRequest, asyncHandler(registerUser));
+router.post('/login', loginValidation, validateRequest, asyncHandler(loginUser));
+router.get('/me', protect, asyncHandler(getUserProfile));
+router.delete('/all', protect, adminOnly, asyncHandler(deleteAllUsers));
+router.delete('/:id', protect, adminOnly, asyncHandler(deleteUser));
+router.post('/forgot-password', forgotPasswordValidation, validateRequest, asyncHandler(forgotPassword));
+router.post('/reset-password/:token', resetPasswordValidation, validateRequest, asyncHandler(resetPassword));
+
+module.exports = router;
+
+//bookmarkRoutes
+const express = require('express');
+const router = express.Router();
+const asyncHandler = require('express-async-handler');
+const { protect } = require('../middlewares/authMiddleware');
+const {
+    addBookmark,
+    getBookmarks,
+    deleteBookmark
+} = require('../controllers/bookmarkController');
+
+// Add a new bookmark
+router.post('/', protect, asyncHandler(addBookmark));
+
+// Get all bookmarks for the logged-in user
+router.get('/', protect, asyncHandler(getBookmarks));
+
+// Delete a bookmark by ID
+router.delete('/:id', protect, asyncHandler(deleteBookmark));
+
+module.exports = router;
+
+//donationRoutes
+
+const express = require('express');
+const router = express.Router();
+const asyncHandler = require('express-async-handler');
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const {
+    createDonation,
+    getAllDonations,
+    getUserDonations,
+    getDonationById,
+    deleteDonation
+} = require('../controllers/donationController');
+
+// User Routes
+router.post('/', protect, asyncHandler(createDonation));               // Create donation
+router.get('/me', protect, asyncHandler(getUserDonations));            // Get current user's donations
+
+// Admin Routes
+router.get('/', protect, adminOnly, asyncHandler(getAllDonations));    // Get all donations
+router.get('/:id', protect, adminOnly, asyncHandler(getDonationById)); // Get single donation
+router.delete('/:id', protect, adminOnly, asyncHandler(deleteDonation)); // Delete donation by ID
+
+module.exports = router;
+
+// src/routes/eventRoutes.js
+
+const express = require('express');
+const router = express.Router();
+const asyncHandler = require('express-async-handler');
+
+const {
+    createEvent,
+    getAllEvents,
+    getEventById,
+    updateEvent,
+    deleteEvent
+} = require('../controllers/eventController');
+
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+
+// Routes
+router.post('/', protect, asyncHandler(createEvent));                 // Create a new event
+router.get('/', asyncHandler(getAllEvents));                          // Get all events
+router.get('/:id', asyncHandler(getEventById));                       // Get a single event
+router.put('/:id', protect, asyncHandler(updateEvent));               // Update an event
+router.delete('/:id', protect, asyncHandler(deleteEvent));            // Delete an event
+
+module.exports = router;
+
+//messageRoutes
+const express = require('express');
+const router = express.Router();
+const { protect } = require('../middlewares/authMiddleware');
+const asyncHandler = require('express-async-handler');
+const {
+    sendMessage,
+    getUserMessages,
+    getUnreadMessages,
+    markAsRead,
+    deleteMessage
+} = require('../controllers/messageController');
+
+router.post('/', protect, asyncHandler(sendMessage));        
+router.get('/', protect, asyncHandler(getUserMessages));
+router.get('/unread', protect, asyncHandler(getUnreadMessages));
+router.patch('/:id/read', protect, asyncHandler(markAsRead));
+router.delete('/:id', protect, asyncHandler(deleteMessage));
+
+module.exports = router;
+
+//notificationRoutes
+// src/routes/notificationRoutes.js
+
+const express = require('express');
+const router = express.Router();
+const { protect } = require('../middlewares/authMiddleware');
+const asyncHandler = require('express-async-handler');
+const {
+    createNotification,
+    getMyNotifications,
+    markAsRead,
+    deleteNotification
+} = require('../controllers/notificationController');
+
+router.post('/', protect, asyncHandler(createNotification));
+router.get('/me', protect, asyncHandler(getMyNotifications));
+router.put('/:id/read', protect, asyncHandler(markAsRead));
+router.delete('/:id', protect, asyncHandler(deleteNotification));
+
+module.exports = router;
+
+
+//portfolioRoutes
+
+// src/routes/portfolioRoutes.js
+const express = require('express');
+const router = express.Router();
+const asyncHandler = require('express-async-handler');
+const upload = require('../middlewares/uploadMiddleware');
+const { protect } = require('../middlewares/authMiddleware');
+const malwareScan = require('../middlewares/malwareScan');
+const {
+  addPortfolioItem,
+  getMyPortfolioItems,
+  updatePortfolioItem,
+  deletePortfolioItem
+} = require('../controllers/portfolioController');
+
+const uploadFile = upload.single('portfolioFile');
+
+router.post('/', protect, uploadFile, malwareScan, asyncHandler(addPortfolioItem));
+router.get('/my', protect, asyncHandler(getMyPortfolioItems));
+router.put('/:id', protect, asyncHandler(updatePortfolioItem));
+router.delete('/:id', protect, asyncHandler(deletePortfolioItem));
+
+module.exports = router;
+
+//reviewRoutes
+
+// src/routes/reviewRoutes.js
+
+const express = require('express');
+const router = express.Router();
+const asyncHandler = require('express-async-handler');
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const {
+    createReview,
+    getUserReviews,
+    getAllReviews,
+    deleteReview
+} = require('../controllers/reviewController');
+
+// Routes
+router.post('/', protect, asyncHandler(createReview)); // Create a new review
+router.get('/me', protect, asyncHandler(getUserReviews)); // Get user's own reviews
+router.get('/', protect, adminOnly, asyncHandler(getAllReviews)); // Admin: Get all reviews
+router.delete('/:id', protect, asyncHandler(deleteReview)); // Delete a review
+
+module.exports = router;
+
+//const express = require('express');
+const router = express.Router();
+const asyncHandler = require('express-async-handler');
+
+// Import controller functions
+const {
+    createTalentProfile,
+    getTalentProfile,
+    updateTalentProfile,
+    deleteTalentProfile,
+    getAllTalentProfiles,
+    getTalentProfileById
+} = require('../controllers/talentController');
+
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const { createTalentProfileValidation, updateTalentProfileValidation } = require('../middlewares/validation');
+const validateRequest = require('../middlewares/validateRequest');
+
+// Create a new talent profile (logged-in user only)
+router.post('/',protect,createTalentProfileValidation, validateRequest, asyncHandler(createTalentProfile));
+
+// Get current user's own talent profile
+router.get('/me', protect, asyncHandler(getTalentProfile));
+
+// Update current user's talent profile
+router.put('/me', protect, updateTalentProfileValidation, validateRequest, asyncHandler(updateTalentProfile));
+
+// Delete current user's talent profile
+router.delete('/me', protect, asyncHandler(deleteTalentProfile));
+
+// Get all talent profiles (public)
+router.get('/', asyncHandler(getAllTalentProfiles));
+
+// Get a single talent profile by ID (public)
+router.get('/:id', asyncHandler(getTalentProfileById));
+
+// [Optional] Delete any talent profile (admin only)
+router.delete('/:id', protect, adminOnly, asyncHandler(deleteTalentProfile));
+
+module.exports = router;
+
+//volunteerRoutes
+
+const express = require('express');
+const router = express.Router();
+const asyncHandler = require('express-async-handler');
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
+const {
+    createVolunteerProfile,
+    getAllVolunteers,
+    updateVolunteerStatus,
+    deleteVolunteer,
+    getVolunteerProfile,
+    updateVolunteerProfile,
+    deleteVolunteerProfile
+} = require('../controllers/volunteerController');
+
+// User: Create & manage own volunteer profile
+router.post('/', protect, asyncHandler(createVolunteerProfile));
+router.get('/me', protect, asyncHandler(getVolunteerProfile));
+router.put('/me', protect, asyncHandler(updateVolunteerProfile));
+router.delete('/me', protect, asyncHandler(deleteVolunteerProfile));
+
+// Admin: Manage all volunteers
+router.get('/', protect, adminOnly, asyncHandler(getAllVolunteers));
+router.put('/:id/status', protect, adminOnly, asyncHandler(updateVolunteerStatus));
+router.delete('/:id', protect, adminOnly, asyncHandler(deleteVolunteer));
+
+module.exports = router;

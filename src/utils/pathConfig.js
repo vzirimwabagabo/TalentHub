@@ -1,4 +1,4 @@
-// config/pathConfig.js (or in a utils file)
+// src/utils/pathConfig.js
 const path = require('path');
 
 const UPLOAD_DIR = path.join(__dirname, '../uploads'); // or '../public/uploads'

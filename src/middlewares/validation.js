@@ -5,9 +5,15 @@ const { body } = require("express-validator");
 exports.registerValidation = [
   body("name").notEmpty().withMessage("Name is required"),
   body("email").isEmail().withMessage("Valid email is required"),
-  body("password")
-    .isLength({ min: 6 })
-    .withMessage("Password must be at least 6 characters"),
+  body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
+  body("role")
+    .optional()
+    .isIn(['participant', 'supporter', 'admin'])
+    .withMessage("Role must be participant, supporter, or admin"),
+  body("supporterType")
+    .if(body("role").equals("supporter"))
+    .isIn(['employer', 'donor', 'volunteer'])
+    .withMessage("Supporter type must be employer, donor, or volunteer")
 ];
 
 // Login validation
@@ -28,31 +34,99 @@ exports.resetPasswordValidation = [
     .withMessage("Password must be at least 6 characters"),
 ];
 
-// ✅ TALENT PROFILE VALIDATIONS — YOU WERE MISSING THESE!
+// ✅ Talent Profile Validations — Updated for Multilingual (en, fr, sw, rw)
 exports.createTalentProfileValidation = [
-  body('bio')
+  // Bio: en is required; others optional
+  body('bio.en')
     .notEmpty()
-    .withMessage('Bio is required'),
+    .withMessage('English bio is required'),
+  body('bio.fr')
+    .optional()
+    .isString()
+    .withMessage('French bio must be a string'),
+  body('bio.sw')
+    .optional()
+    .isString()
+    .withMessage('Swahili bio must be a string'),
+  body('bio.rw')
+    .optional()
+    .isString()
+    .withMessage('Kinyarwanda bio must be a string'),
+
+  // Headline: all optional, max 100 chars
+  body('headline.en')
+    .optional()
+    .isString()
+    .isLength({ max: 100 })
+    .withMessage('English headline must be under 100 characters'),
+  body('headline.fr')
+    .optional()
+    .isString()
+    .isLength({ max: 100 })
+    .withMessage('French headline must be under 100 characters'),
+  body('headline.sw')
+    .optional()
+    .isString()
+    .isLength({ max: 100 })
+    .withMessage('Swahili headline must be under 100 characters'),
+  body('headline.rw')
+    .optional()
+    .isString()
+    .isLength({ max: 100 })
+    .withMessage('Kinyarwanda headline must be under 100 characters'),
+
+  // Skills: optional array of strings
   body('skills')
     .optional()
     .isArray()
     .withMessage('Skills must be an array'),
-  body('headline')
+  body('skills.*')
     .optional()
     .isString()
-    .isLength({ max: 100 })
-    .withMessage('Headline must be under 100 characters')
+    .withMessage('Each skill must be a string')
 ];
 
+// Update validation (all fields optional)
 exports.updateTalentProfileValidation = [
-  body('bio')
+  // Bio
+  body('bio.en')
+    .optional()
+    .isString()
+    .notEmpty()
+    .withMessage('English bio cannot be empty'),
+  body('bio.fr')
     .optional()
     .isString(),
+  body('bio.sw')
+    .optional()
+    .isString(),
+  body('bio.rw')
+    .optional()
+    .isString(),
+
+  // Headline
+  body('headline.en')
+    .optional()
+    .isString()
+    .isLength({ max: 100 }),
+  body('headline.fr')
+    .optional()
+    .isString()
+    .isLength({ max: 100 }),
+  body('headline.sw')
+    .optional()
+    .isString()
+    .isLength({ max: 100 }),
+  body('headline.rw')
+    .optional()
+    .isString()
+    .isLength({ max: 100 }),
+
+  // Skills
   body('skills')
     .optional()
     .isArray(),
-  body('headline')
+  body('skills.*')
     .optional()
     .isString()
-    .isLength({ max: 100 })
 ];
