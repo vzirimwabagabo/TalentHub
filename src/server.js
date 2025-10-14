@@ -1,8 +1,14 @@
 // src/server.js
-require('dotenv-safe').config({
-  example: './.env.example',
-  allowEmptyValues: true,
-});
+
+// ✅ Load environment variables
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv-safe').config({
+    example: './.env.example',
+    allowEmptyValues: true
+  });
+} else {
+  require('dotenv').config();
+}
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -44,7 +50,7 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // ====== Dynamic Route Loader ======
-const pluralMap = {}; // you can fill this mapping if needed
+const pluralMap = {}; // Optional mapping if you want to pluralize route names
 const routesDir = path.join(__dirname, 'routes');
 
 try {
@@ -61,26 +67,43 @@ try {
   console.error('❌ Failed to load routes:', err);
 }
 
-// ====== Database Connection ======
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
 async function connectDB() {
   try {
     if (process.env.NODE_ENV === 'development') {
+      // 🧩 Local or development environment (uses in-memory MongoDB)
       const mongod = await MongoMemoryServer.create();
       const uri = mongod.getUri();
-      await mongoose.connect(uri);
+      await mongoose.connect(uri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
       console.log('✅ Connected to In-Memory MongoDB (Development)');
     } else {
-      await mongoose.connect(process.env.MONGO_URI);
-      console.log('✅ Connected to MongoDB');
+      // 🌍 Production connection (MongoDB Atlas)
+      const mongoURI =
+        process.env.TALENTHUB_URL || process.env.MONGO_URI;
+
+      if (!mongoURI) {
+        throw new Error('❌ Missing MongoDB connection string.');
+      }
+
+      await mongoose.connect(mongoURI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 10000, // ⏱ avoid hanging connections
+      });
+
+      console.log('✅ Connected to MongoDB Atlas (Production)');
     }
   } catch (err) {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('❌ MongoDB connection error:', err.message);
   }
 }
 
 connectDB();
+
 
 // ====== Static Files ======
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -110,9 +133,13 @@ app.get('/api/health', (req, res) => {
 });
 
 // ====== 404 Handler ======
-app.use((req, res) => {
-  res.status(404).json({
-    message: 'Resource not found. Check the URL and HTTP method.',
+// ====== Error Handler ======
+app.use((err, req, res, next) => {
+  console.error('❌ SERVER ERROR:', err.stack || err.message);
+  res.status(500).json({
+    success: false,
+    message: err.message || 'Internal Server Error',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 });
 
@@ -120,5 +147,4 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // ====== Export Express App ======
-// Important for Vercel – do not call app.listen() here
-module.exports = app;
+module.exports = app; // Required by Vercel (no app.listen)
