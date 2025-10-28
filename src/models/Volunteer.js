@@ -1,40 +1,35 @@
-// src/models/Volunteer.js
-
 const mongoose = require('mongoose');
 
 const volunteerSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    unique: true,
   },
   bio: {
-    type: String,
-    required: [true, 'Bio is required'],
-    trim: true,
-    minlength: [10, 'Bio must be at least 10 characters'],
-    maxlength: [500, 'Bio must be at most 500 characters']
+    en: { type: String, required: true },
+    fr: { type: String, default: null },
+    sw: { type: String, default: null },
+    rw: { type: String, default: null }  // Kinyarwanda support
   },
+  skills: [{
+    type: String,
+    trim: true,
+    maxlength: 50
+  }],
   availability: {
     type: String,
-    required: [true, 'Availability is required'],
-    enum: {
-      values: ['Weekdays', 'Weekends', 'Anytime'],
-      message: 'Availability must be either Weekdays, Weekends, or Anytime'
-    }
+    enum: ['full-time', 'part-time', 'seasonal', 'occasional'],
+    default: 'part-time',
   },
-  status: {
+  interests: [{
     type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending'
-  },
-  isDeleted: {
-  type: Boolean,
-  default: false
-}
+    trim: true,
+    maxlength: 100,
+  }],
+}, { timestamps: true });
 
-}, {
-  timestamps: true
-});
+volunteerSchema.index({ user: 1 });
 
 module.exports = mongoose.model('Volunteer', volunteerSchema);

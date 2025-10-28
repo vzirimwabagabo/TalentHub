@@ -1,4 +1,3 @@
-// src/models/MatchRequest.js
 const mongoose = require('mongoose');
 
 const matchRequestSchema = new mongoose.Schema({
@@ -36,17 +35,11 @@ const matchRequestSchema = new mongoose.Schema({
     default: 'pending',
     required: true
   },
-  // Optional message from talent (e.g., "I have 3 years of teaching experience")
+  // Optional message from talent
   message: {
     type: String,
     trim: true,
     maxlength: 500
-  },
-  // Timestamp
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    required: true
   },
   // Who reviewed/approved/rejected the request (admin or supporter)
   reviewedBy: {
@@ -62,10 +55,10 @@ const matchRequestSchema = new mongoose.Schema({
     }
   }
 }, {
-  timestamps: true // Adds `updatedAt` automatically
+  timestamps: true // Adds createdAt and updatedAt automatically
 });
 
-// Index for performance
+// Indexes for performance
 matchRequestSchema.index({ talent: 1, status: 1 });
 matchRequestSchema.index({ opportunity: 1 });
 matchRequestSchema.index({ status: 1, createdAt: -1 });

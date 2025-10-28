@@ -1,30 +1,24 @@
-const User = require('../models/User');
-const Donation = require('../models/Donation');
-const TalentProfile = require('../models/TalentProfile');
-const Volunteer = require('../models/Volunteer');
-const Message = require('../models/Message');
+// src/controllers/adminController.js
 
-// Get analytics data
+const {
+  getUserCount,
+  getTotalDonationsAmount,
+  getMostActiveTalents,
+  getMostActiveVolunteers,
+  getUnreadMessagesCount
+} = require('../services/adminService');
+
+// Get analytics data for admin dashboard
 exports.getAnalytics = async (req, res, next) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalDonationsAggregate = await Donation.aggregate([
-      { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]);
-    const totalDonations = totalDonationsAggregate[0]?.total || 0;
+    // Call service layer functions to fetch data
+    const totalUsers = await getUserCount();
+    const totalDonations = await getTotalDonationsAmount();
+    const mostActiveTalents = await getMostActiveTalents();
+    const mostActiveVolunteers = await getMostActiveVolunteers();
+    const unreadMessages = await getUnreadMessagesCount();
 
-    const mostActiveTalents = await TalentProfile.find()
-      .sort({ updatedAt: -1 })
-      .limit(5)
-      .populate('user', 'name email');
-
-    const mostActiveVolunteers = await Volunteer.find()
-      .sort({ updatedAt: -1 })
-      .limit(5)
-      .populate('user', 'name email');
-
-    const unreadMessages = await Message.countDocuments({ read: false });
-
+    // Send aggregated response
     res.status(200).json({
       success: true,
       data: {
@@ -39,9 +33,13 @@ exports.getAnalytics = async (req, res, next) => {
     next(error);
   }
 };
+
+// Get all users (without sensitive fields)
 exports.getAllUsers = async (req, res, next) => {
   try {
-    const users = await User.find().select('-password -resetPasswordToken -resetPasswordExpires');
+    const users = await require('../models/User')
+      .find()
+      .select('-password -resetPasswordToken -resetPasswordExpires');
     res.status(200).json({ success: true, data: users });
   } catch (error) {
     next(error);

@@ -1,66 +1,46 @@
-// src/controllers/opportunityController.js
-const Opportunity = require('../models/Opportunity');
+const opportunityService = require('../services/opportunityService');
 
-// Create new opportunity (supporter or admin only)
 exports.createOpportunity = async (req, res, next) => {
   try {
-    const { title, description, type, skillsRequired, location, expiresAt } = req.body;
-
-    // Only supporters or admins can create opportunities
-    if (req.user.role !== 'supporter' && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Only supporters or admins can post opportunities'
-      });
-    }
-
-    const opportunity = await Opportunity.create({
-      title,
-      description,
-      type,
-      skillsRequired: Array.isArray(skillsRequired) ? skillsRequired : [],
-      location,
-      postedBy: req.user._id,
-      expiresAt
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Opportunity created successfully',
-       opportunity
-    });
+    const opportunity = await opportunityService.createOpportunity(req.body);
+    res.status(201).json({ success: true, data: opportunity });
   } catch (error) {
     next(error);
   }
 };
 
-// Get all open opportunities (public)
 exports.getAllOpportunities = async (req, res, next) => {
   try {
-    const opportunities = await Opportunity.find({ status: 'open' })
-      .populate('postedBy', 'name email')
-      .sort({ createdAt: -1 });
-    res.status(200).json({
-      success: true,
-      count: opportunities.length,
-       opportunities
-    });
+    const opportunities = await opportunityService.getAllOpportunities();
+    res.status(200).json({ success: true, data: opportunities });
   } catch (error) {
     next(error);
   }
 };
 
-// Get opportunity by ID (public)
 exports.getOpportunityById = async (req, res, next) => {
   try {
-    const opp = await Opportunity.findById(req.params.id).populate('postedBy', 'name email');
-    if (!opp) {
-      return res.status(404).json({ success: false, message: 'Opportunity not found' });
-    }
-    res.status(200).json({
-      success: true,
-       opp
-    });
+    const opportunity = await opportunityService.getOpportunityById(req.params.id);
+    if (!opportunity) return res.status(404).json({ success: false, message: 'Opportunity not found' });
+    res.status(200).json({ success: true, data: opportunity });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.updateOpportunity = async (req, res, next) => {
+  try {
+    const updatedOpportunity = await opportunityService.updateOpportunity(req.params.id, req.body);
+    res.status(200).json({ success: true, data: updatedOpportunity });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteOpportunity = async (req, res, next) => {
+  try {
+    await opportunityService.deleteOpportunity(req.params.id);
+    res.status(204).send();
   } catch (error) {
     next(error);
   }

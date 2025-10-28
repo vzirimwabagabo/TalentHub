@@ -1,53 +1,45 @@
-// src/models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Please enter your name']
+  name: { type: String, required: true, trim: true },
+  email: { 
+    type: String, 
+    required: true, 
+    unique: true, 
+    lowercase: true,
+    trim: true,
+    match: /^\S+@\S+\.\S+$/  // email format validation
   },
-  email: {
-    type: String,
-    required: [true, 'Please enter your email'],
-    unique: true,
-    lowercase: true
+  password: { type: String, required: true, select: false },
+  role: { 
+    type: String, 
+    enum: ['participant', 'supporter', 'admin'], 
+    default: 'participant' 
   },
-  password: {
-    type: String,
-    required: [true, 'Please enter your password'],
-    minlength: 6,
-    select: false // hide by default
-  },
-  role: {
-    type: String,
-    enum: ['participant', 'supporter', 'admin'],
-    default: 'participant'
-  },
-  supporterType: {
-    type: String,
-    enum: ['employer', 'donor', 'volunteer'],
-    // Only required if role === 'supporter'
+  supporterType: { 
+    type: String, 
+    enum: ['employer', 'donor', 'volunteer'], 
+    default: null 
   },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
-  isDeleted: {
-    type: Boolean,
-    default: false
-  }
-}, {
-  timestamps: true
-});
+}, { timestamps: true });
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
+// Password hashing middleware
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
+  try {
+    const salt = await bcrypt.genSalt(12);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch(error) {
+    next(error);
+  }
 });
 
-// Compare passwords for login
-userSchema.methods.matchPassword = async function(enteredPassword) {
+// Method to compare passwords securely
+userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

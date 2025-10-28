@@ -4,7 +4,7 @@
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv-safe').config({
     example: './.env.example',
-    allowEmptyValues: true
+    allowEmptyValues: true,
   });
 } else {
   require('dotenv').config();
@@ -13,107 +13,132 @@ if (process.env.NODE_ENV !== 'production') {
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const helmet = require('helmet');
 const morgan = require('morgan');
+const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-const { errorHandler } = require('./middlewares/errorHandler');
+const { MongoMemoryServer } = require('mongodb-memory-server');
+const { errorHandler } = require('./middlewares/errorHandlerMiddleware');
 
 const app = express();
 
-// ====== Security Middleware ======
-app.use(helmet());
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || '*',
-    credentials: true,
-  })
-);
+// ===============================
+// 🔒 Security Middleware
+// ===============================
+// app.use(helmet());
 
-// ====== Body Parsing ======
+// const allowedOrigins = [
+//   process.env.CLIENT_URL || 'http://localhost:3000','http://localhost:5000'
+// ];
+
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     // allow requests with no origin (like mobile apps or curl)
+//     if (!origin) return callback(null, true);
+//     if (allowedOrigins.includes(origin)) return callback(null, true);
+//     return callback(new Error('Not allowed by CORS'));
+//   },
+//   credentials: true,
+// }));
+app.use(cors({ origin: true, credentials: true }));
+
+
+// ===============================
+// 📦 Body Parsing
+// ===============================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ====== Logging ======
+// ===============================
+// 🧾 Logging
+// ===============================
 app.use(morgan('combined'));
 
-// ====== Rate Limiting ======
+// ===============================
+// 🚦 Rate Limiting
+// ===============================
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
 });
 app.use('/api/', limiter);
 
-// ====== Dynamic Route Loader ======
-const pluralMap = {}; // Optional mapping if you want to pluralize route names
+// ===============================
+// 📁 Dynamic Route Loader
+// ===============================
 const routesDir = path.join(__dirname, 'routes');
 
 try {
   fs.readdirSync(routesDir).forEach((file) => {
     if (file.endsWith('Routes.js')) {
       const route = require(`./routes/${file}`);
-      const baseName = file.replace('Routes.js', '');
-      const apiPath = pluralMap[baseName.toLowerCase()] || baseName.toLowerCase();
-      app.use(`/api/v1/${apiPath}`, route);
-      console.log(`✅ Mounted: /api/v1/${apiPath}`);
+      const baseName = file.replace('Routes.js', '').toLowerCase();
+      app.use(`/api/v1/${baseName}`, route);
+      console.log(`✅ Mounted: /api/v1/${baseName}`);
     }
   });
 } catch (err) {
   console.error('❌ Failed to load routes:', err);
 }
 
-const { MongoMemoryServer } = require('mongodb-memory-server');
-
+// ===============================
+// 🧩 MongoDB Connection
+// ===============================
 async function connectDB() {
   try {
+    let mongoURI;
+
     if (process.env.NODE_ENV === 'development') {
-      // 🧩 Local or development environment (uses in-memory MongoDB)
+      // 🧠 Use in-memory MongoDB for local dev/testing
       const mongod = await MongoMemoryServer.create();
-      const uri = mongod.getUri();
-      await mongoose.connect(uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
-      console.log('✅ Connected to In-Memory MongoDB (Development)');
+      mongoURI = mongod.getUri();
+      console.log('✅ Using In-Memory MongoDB (Development)');
     } else {
-      // 🌍 Production connection (MongoDB Atlas)
-      const mongoURI =
-        process.env.TALENTHUB_URL || process.env.MONGO_URI;
-
-      if (!mongoURI) {
-        throw new Error('❌ Missing MongoDB connection string.');
-      }
-
-      await mongoose.connect(mongoURI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 10000, // ⏱ avoid hanging connections
-      });
-
-      console.log('✅ Connected to MongoDB Atlas (Production)');
+      // 🌍 Use Atlas or external MongoDB in production
+      mongoURI = process.env.TALENTHUBDB_MONGODB_URI || process.env.MONGO_URI;
+      if (!mongoURI) throw new Error('❌ Missing MongoDB connection string.');
+      console.log('✅ Using MongoDB Atlas (Production)');
     }
+
+    await mongoose.connect(mongoURI, {
+      serverSelectionTimeoutMS: 10000,
+    });
+
+    console.log('✅ MongoDB connection successful!');
   } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);
   }
 }
 
 connectDB();
+// 🏁 Local Development Startup
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running locally on port ${PORT}`);
+  });
+}
 
-
-// ====== Static Files ======
+// ===============================
+// 🖼️ Static Files
+// ===============================
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ====== Languages API ======
+// ===============================
+// 🌐 Language Endpoint
+// ===============================
 app.get('/api/v1/languages', (req, res) => {
   res.json({ languages: ['en', 'fr', 'sw'] });
 });
 
-// ====== Swagger Documentation ======
+// ===============================
+// 📘 Swagger API Docs
+// ===============================
 const swaggerSpec = swaggerJsdoc({
   swaggerDefinition: {
     openapi: '3.0.0',
@@ -121,9 +146,12 @@ const swaggerSpec = swaggerJsdoc({
   },
   apis: ['./src/routes/*.js'],
 });
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// ====== Health Check ======
+// ===============================
+// ❤️ Health Check
+// ===============================
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -132,8 +160,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ====== 404 Handler ======
-// ====== Error Handler ======
+// ===============================
+// ⚠️ Error Handlers
+// ===============================
+app.use(errorHandler);
+
 app.use((err, req, res, next) => {
   console.error('❌ SERVER ERROR:', err.stack || err.message);
   res.status(500).json({
@@ -143,8 +174,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ====== Error Handler ======
-app.use(errorHandler);
 
-// ====== Export Express App ======
-module.exports = app; // Required by Vercel (no app.listen)
+// ===============================
+// 🚀 Export for Vercel
+// ===============================
+module.exports = app; // Do NOT use app.listen() for Vercel

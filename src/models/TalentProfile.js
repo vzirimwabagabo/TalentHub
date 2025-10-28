@@ -1,4 +1,3 @@
-// src/models/TalentProfile.js
 const mongoose = require('mongoose');
 
 const talentProfileSchema = new mongoose.Schema({
@@ -9,56 +8,32 @@ const talentProfileSchema = new mongoose.Schema({
     unique: true
   },
   bio: {
-    en: {
-      type: String,
-      required: [true, 'English bio is required'],
-      trim: true
-    },
-    fr: {
-      type: String,
-      trim: true
-    },
-    sw: {
-      type: String,
-      trim: true
-    },
-    rw: {
-      type: String,
-      trim: true
-    }
-  },
-  headline: {
-    en: {
-      type: String,
-      trim: true,
-      maxlength: 100
-    },
-    fr: {
-      type: String,
-      trim: true,
-      maxlength: 100
-    },
-    sw: {
-      type: String,
-      trim: true,
-      maxlength: 100
-    },
-    rw: {
-      type: String,
-      trim: true,
-      maxlength: 100
-    }
+    en: { type: String, required: true },
+    fr: { type: String, default: null },
+    sw: { type: String, default: null },
+    rw: { type: String, default: null }  // Kinyarwanda language code 'rw'
   },
   skills: [{
     type: String,
-    trim: true
+    trim: true,
+    maxlength: 50
   }],
-  isDeleted: {
-    type: Boolean,
-    default: false
-  }
-}, {
-  timestamps: true
-});
+  experienceLevel: {
+    type: String,
+    enum: ['beginner', 'intermediate', 'expert'],
+    default: 'beginner'
+  },
+  availability: {
+    type: String,
+    enum: ['full-time', 'part-time', 'freelance'],
+    default: 'part-time'
+  },
+  portfolio: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Portfolio'
+  }]
+}, { timestamps: true });
+
+talentProfileSchema.index({ user: 1 });
 
 module.exports = mongoose.model('TalentProfile', talentProfileSchema);

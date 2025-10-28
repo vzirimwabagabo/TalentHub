@@ -1,48 +1,47 @@
-// src/models/Portfolio.js
 const mongoose = require('mongoose');
 
 const portfolioSchema = new mongoose.Schema({
-  talent: {
+  talentProfile: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'TalentProfile',
-    required: true
+    required: true,
+    index: true
   },
-  title: {
+  projectName: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    maxlength: 150
   },
   description: {
     type: String,
-    maxlength: 1000
+    trim: true,
+    maxlength: 2000
   },
-  mediaType: {
+  projectUrl: {
     type: String,
-    enum: ['image', 'video', 'pdf', 'audio'], // ← Added 'audio' from your second def
-    required: true
+    trim: true,
+    default: null
   },
-  url: {
+  technologies: [{
     type: String,
-    required: true
+    trim: true,
+    maxlength: 50
+  }],
+  startDate: {
+    type: Date,
+    required: false
   },
-  fileName: {
-    type: String,
-    required: true
-  },
-  order: {
-    type: Number,
-    default: 0
-  },
-  projectType: { 
-    type: String,
-    enum: ['Art', 'Music', 'Writing', 'Design', 'Video', 'Craft', 'Education']
-  },
-  tags: [String],
-  isFeatured: { 
-    type: Boolean, 
-    default: false 
+  endDate: {
+    type: Date,
+    required: false,
+    validate: {
+      validator: function(value) {
+        return !value || value >= this.startDate;
+      },
+      message: 'End date must be after start date'
+    }
   }
-}, 
-{ timestamps: true });
+}, { timestamps: true });
 
 module.exports = mongoose.model('Portfolio', portfolioSchema);

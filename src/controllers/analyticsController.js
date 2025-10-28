@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Donation = require('../models/Donation');
 const Event = require('../models/Event');
 const TalentProfile = require('../models/TalentProfile');
+const Opportunity = require('../models/Opportunity');
 
 exports.getDashboardStats = async (req, res, next) => {
     try {
@@ -24,4 +25,21 @@ exports.getDashboardStats = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
+};
+// Public stats for homepage
+exports.getPublicStats = async (req, res, next) => {
+  try {
+    const totalOpportunities = await Opportunity.countDocuments({ status: 'open' });
+    const totalEvents = await Event.countDocuments({ isDeleted: false });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalOpportunities,
+        totalEvents,
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
 };

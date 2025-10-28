@@ -1,36 +1,44 @@
-// src/controllers/userController.js
+const userService = require('../services/userService');
 
-const User = require('../models/User');
-
-// Get all users (admin)
+// Get all users without sensitive info
 exports.getAllUsers = async (req, res, next) => {
   try {
-    const users = await User.find().select('-password -resetPasswordToken -resetPasswordExpires');
+    const users = await userService.getAllUsers();
     res.status(200).json({ success: true, data: users });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 };
 
-// Get a user by ID (public profile)
+// Get user by ID
 exports.getUserById = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select('-password -resetPasswordToken -resetPasswordExpires');
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    const user = await userService.getUserById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     res.status(200).json({ success: true, data: user });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 };
 
-// Update own profile
-exports.updateUserProfile = async (req, res, next) => {
+// Update user (only authorized user or admin)
+exports.updateUser = async (req, res, next) => {
   try {
-    const updates = req.body;
-    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true })
-      .select('-password -resetPasswordToken -resetPasswordExpires');
-    res.status(200).json({ success: true, data: user });
-  } catch (err) {
-    next(err);
+    // Authorization logic to be handled in middleware or here
+
+    const updatedUser = await userService.updateUser(req.params.id, req.body);
+    res.status(200).json({ success: true, data: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Delete user (only admin)
+exports.deleteUser = async (req, res, next) => {
+  try {
+    await userService.deleteUser(req.params.id);
+    res.status(204).send();
+  } catch (error) {
+    next(error);
   }
 };

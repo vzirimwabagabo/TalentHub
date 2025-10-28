@@ -1,51 +1,47 @@
-// src/models/Opportunity.js
 const mongoose = require('mongoose');
 
 const opportunitySchema = new mongoose.Schema({
   title: {
     type: String,
-    required: [true, 'Opportunity title is required'],
-    trim: true
+    required: true,
+    trim: true,
+    maxlength: 150
   },
   description: {
     type: String,
-    required: [true, 'Description is required'],
-    trim: true
+    trim: true,
+    maxlength: 2000
   },
-  type: {
+  category: {
     type: String,
-    enum: ['job', 'donation', 'volunteer', 'sponsorship', 'training'],
+    enum: ['job', 'internship', 'scholarship', 'grant', 'volunteering', 'other'],
     required: true
   },
-  skillsRequired: [String], // e.g., ["JavaScript", "Teaching"]
   location: {
     type: String,
-    required: true
+    trim: true,
+    maxlength: 200,
   },
   postedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  claimedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+  applyUrl: {
+    type: String,
+    trim: true,
     default: null
   },
-  status: {
-    type: String,
-    enum: ['open', 'matched', 'claimed', 'fulfilled', 'closed'],
-    default: 'open'
-  },
-  createdAt: {
+  deadline: {
     type: Date,
-    default: Date.now
+    required: false
   },
-  expiresAt: {
-    type: Date
+  isActive: {
+    type: Boolean,
+    default: true
   }
-}, {
-  timestamps: true
-});
+}, { timestamps: true });
+
+opportunitySchema.index({ category: 1, isActive: 1, deadline: 1 });
 
 module.exports = mongoose.model('Opportunity', opportunitySchema);

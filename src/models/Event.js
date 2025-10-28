@@ -1,36 +1,49 @@
-// src/models/Event.js
-
 const mongoose = require('mongoose');
 
 const eventSchema = new mongoose.Schema({
-    title: {
-        type: String,
-        required: [true, 'Event title is required'],
-        trim: true
-    },
-    description: {
-        type: String,
-        required: [true, 'Event description is required']
-    },
-    date: {
-        type: Date,
-        required: [true, 'Event date is required']
-    },
-    location: {
-        type: String,
-        required: [true, 'Event location is required']
-    },
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: [true, 'Creator ID is required']
-    },
-    isDeleted: {
-        type: Boolean,
-        default: false
+  title: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 150
+  },
+  description: {
+    type: String,
+    trim: true,
+    maxlength: 1000
+  },
+  startDate: {
+    type: Date,
+    required: true
+  },
+  endDate: {
+    type: Date,
+    required: true,
+    validate: {
+      validator: function(value) {
+        return value >= this.startDate;
+      },
+      message: 'End date must be after start date'
     }
-}, {
-    timestamps: true
-});
+  },
+  location: {
+    type: String,
+    trim: true,
+    maxlength: 200
+  },
+  organizer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  attendees: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  isVirtual: {
+    type: Boolean,
+    default: false
+  }
+}, { timestamps: true });
 
 module.exports = mongoose.model('Event', eventSchema);
